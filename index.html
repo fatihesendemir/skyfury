@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sky Fury - Gelişmiş Uçak Oyunu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Özel CSS */
+        @keyframes cloudMove {
+            from { background-position: 0 0; }
+            to { background-position: 10000px 0; }
+        }
+        
+        @keyframes explosion {
+            0% { transform: scale(0); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+        
+        .explosion {
+            animation: explosion 0.5s ease-out forwards;
+        }
+        
+        .game-container {
+            background-image: url('https://images.unsplash.com/photo-1451187580459-43490279c9fa?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+            animation: cloudMove 200s linear infinite;
+        }
+        
+        .jet {
+            transition: transform 0.1s ease;
+        }
+        
+        .bullet {
+            transition: transform 0.05s linear;
+        }
+        
+        .enemy {
+            transition: transform 0.2s linear;
+        }
+        
+        .powerup {
+            animation: float 2s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .health-bar {
+            transition: width 0.3s ease;
+        }
+        
+        .damage-effect {
+            animation: damageFlash 0.3s;
+        }
+        
+        @keyframes damageFlash {
+            0%, 100% { background-color: transparent; }
+            50% { background-color: rgba(255, 0, 0, 0.3); }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white overflow-hidden">
+    <div class="flex flex-col items-center justify-center min-h-screen p-4">
+        <!-- Ana Menü -->
+        <div id="main-menu" class="text-center z-50">
+            <h1 class="text-6xl font-bold mb-6 text-blue-400">SKY FURY</h1>
+            <p class="text-xl mb-8 text-blue-200">Gökyüzünün hakimi ol!</p>
+            <div class="space-y-4">
+                <button id="start-game" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full text-xl transition-all transform hover:scale-105">
+                    OYNA
+                </button>
+                <button id="how-to-play" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-full transition-all transform hover:scale-105">
+                    Nasıl Oynanır?
+                </button>
+                <button id="high-scores" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-full transition-all transform hover:scale-105">
+                    Yüksek Skorlar
+                </button>
+            </div>
+        </div>
+        
+        <!-- Nasıl Oynanır -->
+        <div id="instructions" class="hidden fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4">
+            <div class="bg-gray-800 p-8 rounded-lg max-w-2xl">
+                <h2 class="text-3xl font-bold mb-6 text-blue-400">NASIL OYNANIR</h2>
+                <div class="space-y-4 text-left">
+                    <div class="flex items-start">
+                        <div class="bg-blue-600 rounded-full w-8 h-8 flex items-center justify-center mr-4 mt-1 flex-shrink-0">1</div>
+                        <p><span class="font-bold">Uçağı hareket ettir:</span> WASD veya yön tuşlarını kullanarak uçağını kontrol et</p>
+                    </div>
+                    <div class="flex items-start">
+                        <div class="bg-blue-600 rounded-full w-8 h-8 flex items-center justify-center mr-4 mt-1 flex-shrink-0">2</div>
+                        <p><span class="font-bold">Ateş et:</span> Boşluk tuşu ile düşmanları vur</p>
+                    </div>
+                    <div class="flex items-start">
+                        <div class="bg-blue-600 rounded-full w-8 h-8 flex items-center justify-center mr-4 mt-1 flex-shrink-0">3</div>
+                        <p><span class="font-bold">Güçlendirmeleri topla:</span> Özel yetenekler kazanmak için güçlendirmeleri topla</p>
+                    </div>
+                    <div class="flex items-start">
+                        <div class="bg-blue-600 rounded-full w-8 h-8 flex items-center justify-center mr-4 mt-1 flex-shrink-0">4</div>
+                        <p><span class="font-bold">Düşmanlardan kaçın:</span> Düşman uçaklarına ve mermilerine çarpmamaya çalış</p>
+                    </div>
+                    <div class="flex items-start">
+                        <div class="bg-blue-600 rounded-full w-8 h-8 flex items-center justify-center mr-4 mt-1 flex-shrink-0">5</div>
+                        <p><span class="font-bold">Yüksek skor yap:</span> Mümkün olduğunca çok düşman vurarak skorunu artır</p>
+                    </div>
+                </div>
+                <div class="mt-8">
+                    <button id="back-to-menu" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full">
+                        Menüye Dön
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Yüksek Skorlar -->
+        <div id="high-scores-screen" class="hidden fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4">
+            <div class="bg-gray-800 p-8 rounded-lg max-w-2xl w-full">
+                <h2 class="text-3xl font-bold mb-6 text-blue-400">YÜKSEK SKORLAR</h2>
+                <div id="scores-list" class="space-y-2 mb-6">
+                    <!-- Skorlar buraya eklenecek -->
+                </div>
+                <div>
+                    <button id="back-to-menu-scores" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full">
+                        Menüye Dön
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Oyun Alanı -->
+        <div id="game-container" class="game-container relative hidden w-full max-w-4xl h-96 bg-blue-900 overflow-hidden rounded-lg border-2 border-blue-700 shadow-lg">
+            <!-- Oyun elemanları buraya eklenecek -->
+            <div id="jet" class="jet absolute w-12 h-12 bg-red-500 rounded-t-full" style="left: 50px; top: 150px;">
+                <div class="absolute w-16 h-4 bg-red-600 rounded-full -bottom-1 left-1/2 transform -translate-x-1/2"></div>
+                <div class="absolute w-4 h-8 bg-red-700 rounded-full -left-1 top-1/2 transform -translate-y-1/2"></div>
+                <div class="absolute w-4 h-8 bg-red-700 rounded-full -right-1 top-1/2 transform -translate-y-1/2"></div>
+            </div>
+            
+            <!-- Oyun bilgileri -->
+            <div class="absolute top-4 left-4 bg-black bg-opacity-50 p-2 rounded">
+                <div class="flex items-center space-x-4">
+                    <div>
+                        <div class="text-sm text-gray-300">SKOR</div>
+                        <div id="score" class="text-xl font-bold">0</div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-300">SEVİYE</div>
+                        <div id="level" class="text-xl font-bold">1</div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-300">CAN</div>
+                        <div class="w-24 h-4 bg-gray-700 rounded-full overflow-hidden">
+                            <div id="health-bar" class="health-bar h-full bg-green-500 rounded-full" style="width: 100%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Güçlendirme göstergeleri -->
+            <div id="powerup-indicators" class="absolute top-4 right-4 bg-black bg-opacity-50 p-2 rounded hidden">
+                <div class="flex space-x-2">
+                    <div id="triple-shot-indicator" class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center hidden">
+                        <span class="text-xs font-bold">3X</span>
+                    </div>
+                    <div id="shield-indicator" class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center hidden">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                    </div>
+                    <div id="rapid-fire-indicator" class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center hidden">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Oyun Bitti Ekranı -->
+            <div id="game-over" class="hidden absolute inset-0 bg-black bg-opacity-80 flex flex-col items-center justify-center z-40">
+                <h2 class="text-4xl font-bold mb-4 text-red-500">OYUN BİTTİ!</h2>
+                <div class="text-2xl mb-6">Skor: <span id="final-score">0</span></div>
+                <div class="space-x-4">
+                    <button id="restart-game" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full">
+                        Tekrar Oyna
+                    </button>
+                    <button id="quit-to-menu" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-6 rounded-full">
+                        Menüye Dön
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Seviye Tamamlandı Ekranı -->
+            <div id="level-complete" class="hidden absolute inset-0 bg-black bg-opacity-80 flex flex-col items-center justify-center z-40">
+                <h2 class="text-4xl font-bold mb-4 text-green-500">SEVİYE TAMAMLANDI!</h2>
+                <div class="text-2xl mb-6">Yeni Seviye: <span id="new-level">2</span></div>
+                <button id="next-level" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full">
+                    Devam Et
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Oyun durumu
+        const gameState = {
+            score: 0,
+            level: 1,
+            health: 100,
+            maxHealth: 100,
+            gameRunning: false,
+            keys: {},
+            enemies: [],
+            bullets: [],
+            explosions: [],
+            powerups: [],
+            enemyBullets: [],
+            enemySpawnRate: 2000, // ms
+            lastEnemySpawn: 0,
+            lastShot: 0,
+            shotDelay: 500, // ms
+            tripleShot: false,
+            tripleShotEndTime: 0,
+            shield: false,
+            shieldEndTime: 0,
+            rapidFire: false,
+            rapidFireEndTime: 0,
+            rapidFireDelay: 200, // ms
+            enemyKills: 0,
+            killsToNextLevel: 10,
+            highScores: JSON.parse(localStorage.getItem('skyFuryHighScores')) || []
+        };
+
+        // DOM elementleri
+        const mainMenu = document.getElementById('main-menu');
+        const instructions = document.getElementById('instructions');
+        const highScoresScreen = document.getElementById('high-scores-screen');
+        const gameContainer = document.getElementById('game-container');
+        const jet = document.getElementById('jet');
+        const scoreDisplay = document.getElementById('score');
+        const levelDisplay = document.getElementById('level');
+        const healthBar = document.getElementById('health-bar');
+        const gameOverScreen = document.getElementById('game-over');
+        const finalScoreDisplay = document.getElementById('final-score');
+        const levelCompleteScreen = document.getElementById('level-complete');
+        const newLevelDisplay = document.getElementById('new-level');
+        const powerupIndicators = document.getElementById('powerup-indicators');
+        const tripleShotIndicator = document.getElementById('triple-shot-indicator');
+        const shieldIndicator = document.getElementById('shield-indicator');
+        const rapidFireIndicator = document.getElementById('rapid-fire-indicator');
+        const scoresList = document.getElementById('scores-list');
+
+        // Oyun boyutları
+        const gameWidth = gameContainer.offsetWidth;
+        const gameHeight = gameContainer.offsetHeight;
+        const jetWidth = jet.offsetWidth;
+        const jetHeight = jet.offsetHeight;
+
+        // Kontroller
+        document.addEventListener('keydown', (e) => {
+            gameState.keys[e.key] = true;
+            
+            // Boşluk tuşu ile ateş et
+            if (e.key === ' ' && gameState.gameRunning) {
+                e.preventDefault();
+                shoot();
+            }
+            
+            // ESC ile menüye dön
+            if (e.key === 'Escape' && gameState.gameRunning) {
+                pauseGame();
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            gameState.keys[e.key] = false;
+        });
+
+        // Buton eventleri
+        document.getElementById('start-game').addEventListener('click', startGame);
+        document.getElementById('how-to-play').addEventListener('click', showInstructions);
+        document.getElementById('high-scores').addEventListener('click', showHighScores);
+        document.getElementById('back-to-menu').addEventListener('click', hideInstructions);
+        document.getElementById('back-to-menu-scores').addEventListener('click', hideHighScores);
+        document.getElementById('restart-game').addEventListener('click', restartGame);
+        document.getElementById('quit-to-menu').addEventListener('click', quitToMenu);
+        document.getElementById('next-level').addEventListener('click', nextLevel);
+
+        // Oyun başlatma
+        function startGame() {
+            mainMenu.classList.add('hidden');
+            gameContainer.classList.remove('hidden');
+            resetGameState();
+            gameState.gameRunning = true;
+            gameLoop();
+        }
+
+        // Oyun durumunu sıfırla
+        function resetGameState() {
+            gameState.score = 0;
+            gameState.level = 1;
+            gameState.health = 100;
+            gameState.enemies = [];
+            gameState.bullets = [];
+            gameState.explosions = [];
+            gameState.powerups = [];
+            gameState.enemyBullets = [];
+            gameState.enemySpawnRate = 2000;
+            gameState.lastEnemySpawn = 0;
+            gameState.lastShot = 0;
+            gameState.shotDelay = 500;
+            gameState.tripleShot = false;
+            gameState.shield = false;
+            gameState.rapidFire = false;
+            gameState.enemyKills = 0;
+            gameState.killsToNextLevel = 10;
+            
+            // Uçağı başlangıç pozisyonuna getir
+            jet.style.left = '50px';
+            jet.style.top = '150px';
+            
+            // UI güncelleme
+            updateUI();
+            
+            // Güçlendirme göstergelerini gizle
+            powerupIndicators.classList.add('hidden');
+            tripleShotIndicator.classList.add('hidden');
+            shieldIndicator.classList.add('hidden');
+            rapidFireIndicator.classList.add('hidden');
+        }
+
+        // Oyun döngüsü
+        function gameLoop() {
+            if (!gameState.gameRunning) return;
+            
+            const now = Date.now();
+            
+            // Uçağı hareket ettir
+            moveJet();
+            
+            // Düşman spawn et
+            if (now - gameState.lastEnemySpawn > gameState.enemySpawnRate) {
+                spawnEnemy();
+                gameState.lastEnemySpawn = now;
+            }
+            
+            // Mermileri hareket ettir
+            moveBullets();
+            
+            // Düşman mermilerini hareket ettir
+            moveEnemyBullets();
+            
+            // Düşmanları hareket ettir
+            moveEnemies();
+            
+            // Güçlendirmeleri hareket ettir
+            movePowerups();
+            
+            // Patlamaları güncelle
+            updateExplosions();
+            
+            // Çarpışmaları kontrol et
+            checkCollisions();
+            
+            // Güçlendirme sürelerini kontrol et
+            checkPowerupTimers(now);
+            
+            // UI güncelle
+            updateUI();
+            
+            // Seviye kontrolü
+            if (gameState.enemyKills >= gameState.killsToNextLevel) {
+                completeLevel();
+            }
+            
+            // Oyun devam ediyorsa döngüyü sürdür
+            if (gameState.gameRunning) {
+                requestAnimationFrame(gameLoop);
+            }
+        }
+
+        // Uçağı hareket ettir
+        function moveJet() {
+            const speed = 5;
+            let newLeft = parseInt(jet.style.left);
+            let newTop = parseInt(jet.style.top);
+            
+            if (gameState.keys['ArrowUp'] || gameState.keys['w']) {
+                newTop = Math.max(0, newTop - speed);
+            }
+            if (gameState.keys['ArrowDown'] || gameState.keys['s']) {
+                newTop = Math.min(gameHeight - jetHeight, newTop + speed);
+            }
+            if (gameState.keys['ArrowLeft'] || gameState.keys['a']) {
+                newLeft = Math.max(0, newLeft - speed);
+            }
+            if (gameState.keys['ArrowRight'] || gameState.keys['d']) {
+                newLeft = Math.min(gameWidth - jetWidth, newLeft + speed);
+            }
+            
+            jet.style.left = `${newLeft}px`;
+            jet.style.top = `${newTop}px`;
+        }
+
+        // Ateş et
+        function shoot() {
+            const now = Date.now();
+            const delay = gameState.rapidFire ? gameState.rapidFireDelay : gameState.shotDelay;
+            
+            if (now - gameState.lastShot < delay) return;
+            
+            gameState.lastShot = now;
+            
+            const jetRect = jet.getBoundingClientRect();
+            const gameRect = gameContainer.getBoundingClientRect();
+            
+            const bulletX = jetRect.left - gameRect.left + jetRect.width;
+            const bulletY = jetRect.top - gameRect.top + jetRect.height / 2 - 2;
+            
+            if (gameState.tripleShot) {
+                // Üçlü mermi
+                createBullet(bulletX, bulletY - 10);
+                createBullet(bulletX, bulletY);
+                createBullet(bulletX, bulletY + 10);
+            } else {
+                // Tek mermi
+                createBullet(bulletX, bulletY);
+            }
+        }
+
+        // Mermi oluştur
+        function createBullet(x, y) {
+            const bullet = document.createElement('div');
+            bullet.className = 'bullet absolute w-4 h-2 bg-yellow-400 rounded';
+            bullet.style.left = `${x}px`;
+            bullet.style.top = `${y}px`;
+            gameContainer.appendChild(bullet);
+            
+            gameState.bullets.push({
+                element: bullet,
+                x: x,
+                y: y,
+                speed: 10
+            });
+        }
+
+        // Mermileri hareket ettir
+        function moveBullets() {
+            for (let i = gameState.bullets.length - 1; i >= 0; i--) {
+                const bullet = gameState.bullets[i];
+                bullet.x += bullet.speed;
+                bullet.element.style.left = `${bullet.x}px`;
+                
+                // Ekran dışına çıkan mermileri kaldır
+                if (bullet.x > gameWidth) {
+                    gameContainer.removeChild(bullet.element);
+                    gameState.bullets.splice(i, 1);
+                }
+            }
+        }
+
+        // Düşman oluştur
+        function spawnEnemy() {
+            const enemyTypes = ['basic', 'shooter', 'fast'];
+            const type = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
+            
+            const size = type === 'fast' ? 20 : type === 'shooter' ? 30 : 25;
+            const x = gameWidth;
+            const y = Math.random() * (gameHeight - size);
+            
+            const enemy = document.createElement('div');
+            enemy.className = 'enemy absolute rounded';
+            
+            if (type === 'basic') {
+                enemy.classList.add('bg-green-600');
+                enemy.style.width = `${size}px`;
+                enemy.style.height = `${size}px`;
+            } else if (type === 'shooter') {
+                enemy.classList.add('bg-purple-600');
+                enemy.style.width = `${size}px`;
+                enemy.style.height = `${size}px`;
+            } else if (type === 'fast') {
+                enemy.classList.add('bg-red-500');
+                enemy.style.width = `${size}px`;
+                enemy.style.height = `${size}px`;
+            }
+            
+            enemy.style.left = `${x}px`;
+            enemy.style.top = `${y}px`;
+            gameContainer.appendChild(enemy);
+            
+            const enemyObj = {
+                element: enemy,
+                x: x,
+                y: y,
+                width: size,
+                height: size,
+                type: type,
+                speed: type === 'fast' ? -4 : type === 'shooter' ? -2 : -3,
+                lastShot: 0,
+                shotDelay: type === 'shooter' ? 1500 : 0
+            };
+            
+            gameState.enemies.push(enemyObj);
+            
+            // Rastgele güçlendirme spawn etme şansı
+            if (Math.random() < 0.05) {
+                spawnPowerup(x, y);
+            }
+        }
+
+        // Güçlendirme oluştur
+        function spawnPowerup(x, y) {
+            const powerupTypes = ['tripleShot', 'shield', 'rapidFire', 'health'];
+            const type = powerupTypes[Math.floor(Math.random() * powerupTypes.length)];
+            
+            const size = 20;
+            
+            const powerup = document.createElement('div');
+            powerup.className = 'powerup absolute rounded-full flex items-center justify-center';
+            powerup.style.width = `${size}px`;
+            powerup.style.height = `${size}px`;
+            
+            if (type === 'tripleShot') {
+                powerup.classList.add('bg-yellow-500');
+                powerup.innerHTML = '<span class="text-xs font-bold">3X</span>';
+            } else if (type === 'shield') {
+                powerup.classList.add('bg-blue-500');
+                powerup.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>';
+            } else if (type === 'rapidFire') {
+                powerup.classList.add('bg-red-500');
+                powerup.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>';
+            } else if (type === 'health') {
+                powerup.classList.add('bg-green-500');
+                powerup.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>';
+            }
+            
+            powerup.style.left = `${x}px`;
+            powerup.style.top = `${y}px`;
+            gameContainer.appendChild(powerup);
+            
+            gameState.powerups.push({
+                element: powerup,
+                x: x,
+                y: y,
+                width: size,
+                height: size,
+                type: type,
+                speed: -2
+            });
+        }
+
+        // Düşmanları hareket ettir
+        function moveEnemies() {
+            const now = Date.now();
+            
+            for (let i = gameState.enemies.length - 1; i >= 0; i--) {
+                const enemy = gameState.enemies[i];
+                enemy.x += enemy.speed;
+                enemy.element.style.left = `${enemy.x}px`;
+                
+                // Düşman ateş edebilir mi?
+                if (enemy.type === 'shooter' && now - enemy.lastShot > enemy.shotDelay) {
+                    enemyShoot(enemy);
+                    enemy.lastShot = now;
+                }
+                
+                // Ekran dışına çıkan düşmanları kaldır
+                if (enemy.x < -enemy.width) {
+                    gameContainer.removeChild(enemy.element);
+                    gameState.enemies.splice(i, 1);
+                }
+            }
+        }
+
+        // Düşman ateş et
+        function enemyShoot(enemy) {
+            const bullet = document.createElement('div');
+            bullet.className = 'bullet absolute w-4 h-2 bg-red-400 rounded';
+            bullet.style.left = `${enemy.x}px`;
+            bullet.style.top = `${enemy.y + enemy.height / 2 - 2}px`;
+            gameContainer.appendChild(bullet);
+            
+            gameState.enemyBullets.push({
+                element: bullet,
+                x: enemy.x,
+                y: enemy.y + enemy.height / 2 - 2,
+                speed: -7
+            });
+        }
+
+        // Düşman mermilerini hareket ettir
+        function moveEnemyBullets() {
+            for (let i = gameState.enemyBullets.length - 1; i >= 0; i--) {
+                const bullet = gameState.enemyBullets[i];
+                bullet.x += bullet.speed;
+                bullet.element.style.left = `${bullet.x}px`;
+                
+                // Ekran dışına çıkan mermileri kaldır
+                if (bullet.x < -10) {
+                    gameContainer.removeChild(bullet.element);
+                    gameState.enemyBullets.splice(i, 1);
+                }
+            }
+        }
+
+        // Güçlendirmeleri hareket ettir
+        function movePowerups() {
+            for (let i = gameState.powerups.length - 1; i >= 0; i--) {
+                const powerup = gameState.powerups[i];
+                powerup.x += powerup.speed;
+                powerup.element.style.left = `${powerup.x}px`;
+                
+                // Ekran dışına çıkan güçlendirmeleri kaldır
+                if (powerup.x < -powerup.width) {
+                    gameContainer.removeChild(powerup.element);
+                    gameState.powerups.splice(i, 1);
+                }
+            }
+        }
+
+        // Patlama efektleri
+        function createExplosion(x, y) {
+            const explosion = document.createElement('div');
+            explosion.className = 'explosion absolute rounded-full bg-orange-500';
+            explosion.style.width = '30px';
+            explosion.style.height = '30px';
+            explosion.style.left = `${x - 15}px`;
+            explosion.style.top = `${y - 15}px`;
+            explosion.style.transform = 'scale(0)';
+            gameContainer.appendChild(explosion);
+            
+            gameState.explosions.push({
+                element: explosion,
+                createdAt: Date.now()
+            });
+            
+            // Patlama sesi (tarayıcı güvenlik politikaları nedeniyle çalışmayabilir)
+            try {
+                const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-explosion-impact-1684.mp3');
+                audio.volume = 0.2;
+                audio.play();
+            } catch (e) {
+                console.log('Ses çalınamadı:', e);
+            }
+        }
+
+        // Patlamaları güncelle
+        function updateExplosions() {
+            const now = Date.now();
+            
+            for (let i = gameState.explosions.length - 1; i >= 0; i--) {
+                const explosion = gameState.explosions[i];
+                
+                // 500ms sonra patlamayı kaldır
+                if (now - explosion.createdAt > 500) {
+                    gameContainer.removeChild(explosion.element);
+                    gameState.explosions.splice(i, 1);
+                }
+            }
+        }
+
+        // Çarpışma kontrolü
+        function checkCollisions() {
+            const jetRect = {
+                x: parseInt(jet.style.left),
+                y: parseInt(jet.style.top),
+                width: jetWidth,
+                height: jetHeight
+            };
+            
+            // Mermi-düşman çarpışması
+            for (let i = gameState.bullets.length - 1; i >= 0; i--) {
+                const bullet = gameState.bullets[i];
+                const bulletRect = {
+                    x: bullet.x,
+                    y: bullet.y,
+                    width: 4,
+                    height: 2
+                };
+                
+                for (let j = gameState.enemies.length - 1; j >= 0; j--) {
+                    const enemy = gameState.enemies[j];
+                    const enemyRect = {
+                        x: enemy.x,
+                        y: enemy.y,
+                        width: enemy.width,
+                        height: enemy.height
+                    };
+                    
+                    if (checkRectCollision(bulletRect, enemyRect)) {
+                        // Çarpışma var, düşmanı yok et
+                        createExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
+                        gameContainer.removeChild(enemy.element);
+                        gameState.enemies.splice(j, 1);
+                        
+                        // Mermiyi kaldır
+                        gameContainer.removeChild(bullet.element);
+                        gameState.bullets.splice(i, 1);
+                        
+                        // Skor artır
+                        gameState.score += enemy.type === 'fast' ? 30 : enemy.type === 'shooter' ? 20 : 10;
+                        gameState.enemyKills++;
+                        
+                        break;
+                    }
+                }
+            }
+            
+            // Düşman mermisi-jet çarpışması
+            for (let i = gameState.enemyBullets.length - 1; i >= 0; i--) {
+                const bullet = gameState.enemyBullets[i];
+                const bulletRect = {
+                    x: bullet.x,
+                    y: bullet.y,
+                    width: 4,
+                    height: 2
+                };
+                
+                if (checkRectCollision(bulletRect, jetRect) && !gameState.shield) {
+                    // Çarpışma var, hasar al
+                    takeDamage(10);
+                    
+                    // Mermiyi kaldır
+                    gameContainer.removeChild(bullet.element);
+                    gameState.enemyBullets.splice(i, 1);
+                    
+                    // Hasar efekti
+                    jet.classList.add('damage-effect');
+                    setTimeout(() => {
+                        jet.classList.remove('damage-effect');
+                    }, 300);
+                }
+            }
+            
+            // Düşman-jet çarpışması
+            for (let i = gameState.enemies.length - 1; i >= 0; i--) {
+                const enemy = gameState.enemies[i];
+                const enemyRect = {
+                    x: enemy.x,
+                    y: enemy.y,
+                    width: enemy.width,
+                    height: enemy.height
+                };
+                
+                if (checkRectCollision(enemyRect, jetRect) && !gameState.shield) {
+                    // Çarpışma var, düşmanı yok et ve hasar al
+                    createExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
+                    gameContainer.removeChild(enemy.element);
+                    gameState.enemies.splice(i, 1);
+                    
+                    takeDamage(20);
+                    
+                    // Hasar efekti
+                    jet.classList.add('damage-effect');
+                    setTimeout(() => {
+                        jet.classList.remove('damage-effect');
+                    }, 300);
+                }
+            }
+            
+            // Güçlendirme-jet çarpışması
+            for (let i = gameState.powerups.length - 1; i >= 0; i--) {
+                const powerup = gameState.powerups[i];
+                const powerupRect = {
+                    x: powerup.x,
+                    y: powerup.y,
+                    width: powerup.width,
+                    height: powerup.height
+                };
+                
+                if (checkRectCollision(powerupRect, jetRect)) {
+                    // Güçlendirme alındı
+                    applyPowerup(powerup.type);
+                    
+                    // Güçlendirmeyi kaldır
+                    gameContainer.removeChild(powerup.element);
+                    gameState.powerups.splice(i, 1);
+                    
+                    // Güçlendirme sesi
+                    try {
+                        const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-positive-interface-beep-221.mp3');
+                        audio.volume = 0.3;
+                        audio.play();
+                    } catch (e) {
+                        console.log('Ses çalınamadı:', e);
+                    }
+                }
+            }
+        }
+
+        // Dikdörtgen çarpışma kontrolü
+        function checkRectCollision(rect1, rect2) {
+            return (
+                rect1.x < rect2.x + rect2.width &&
+                rect1.x + rect1.width > rect2.x &&
+                rect1.y < rect2.y + rect2.height &&
+                rect1.y + rect1.height > rect2.y
+            );
+        }
+
+        // Hasar al
+        function takeDamage(amount) {
+            gameState.health = Math.max(0, gameState.health - amount);
+            
+            if (gameState.health <= 0) {
+                gameOver();
+            }
+        }
+
+        // Güçlendirme uygula
+        function applyPowerup(type) {
+            const now = Date.now();
+            const duration = 10000; // 10 saniye
+            
+            powerupIndicators.classList.remove('hidden');
+            
+            if (type === 'tripleShot') {
+                gameState.tripleShot = true;
+                gameState.tripleShotEndTime = now + duration;
+                tripleShotIndicator.classList.remove('hidden');
+            } else if (type === 'shield') {
+                gameState.shield = true;
+                gameState.shieldEndTime = now + duration;
+                shieldIndicator.classList.remove('hidden');
+                jet.classList.add('border-2', 'border-blue-400');
+            } else if (type === 'rapidFire') {
+                gameState.rapidFire = true;
+                gameState.rapidFireEndTime = now + duration;
+                rapidFireIndicator.classList.remove('hidden');
+            } else if (type === 'health') {
+                gameState.health = Math.min(gameState.maxHealth, gameState.health + 30);
+            }
+        }
+
+        // Güçlendirme sürelerini kontrol et
+        function checkPowerupTimers(now) {
+            if (gameState.tripleShot && now > gameState.tripleShotEndTime) {
+                gameState.tripleShot = false;
+                tripleShotIndicator.classList.add('hidden');
+            }
+            
+            if (gameState.shield && now > gameState.shieldEndTime) {
+                gameState.shield = false;
+                shieldIndicator.classList.add('hidden');
+                jet.classList.remove('border-2', 'border-blue-400');
+            }
+            
+            if (gameState.rapidFire && now > gameState.rapidFireEndTime) {
+                gameState.rapidFire = false;
+                rapidFireIndicator.classList.add('hidden');
+            }
+            
+            // Tüm güçlendirmeler bittiğinde göstergeleri gizle
+            if (!gameState.tripleShot && !gameState.shield && !gameState.rapidFire) {
+                powerupIndicators.classList.add('hidden');
+            }
+        }
+
+        // UI güncelle
+        function updateUI() {
+            scoreDisplay.textContent = gameState.score;
+            levelDisplay.textContent = gameState.level;
+            healthBar.style.width = `${(gameState.health / gameState.maxHealth) * 100}%`;
+            
+            // Sağlık durumuna göre renk değiştir
+            if (gameState.health < 30) {
+                healthBar.classList.remove('bg-green-500', 'bg-yellow-500');
+                healthBar.classList.add('bg-red-500');
+            } else if (gameState.health < 60) {
+                healthBar.classList.remove('bg-green-500', 'bg-red-500');
+                healthBar.classList.add('bg-yellow-500');
+            } else {
+                healthBar.classList.remove('bg-yellow-500', 'bg-red-500');
+                healthBar.classList.add('bg-green-500');
+            }
+        }
+
+        // Oyun bitti
+        function gameOver() {
+            gameState.gameRunning = false;
+            finalScoreDisplay.textContent = gameState.score;
+            gameOverScreen.classList.remove('hidden');
+            
+            // Yüksek skorları güncelle
+            updateHighScores(gameState.score);
+        }
+
+        // Seviye tamamlandı
+        function completeLevel() {
+            gameState.gameRunning = false;
+            newLevelDisplay.textContent = gameState.level + 1;
+            levelCompleteScreen.classList.remove('hidden');
+        }
+
+        // Sonraki seviye
+        function nextLevel() {
+            gameState.level++;
+            gameState.enemyKills = 0;
+            gameState.killsToNextLevel = Math.floor(gameState.killsToNextLevel * 1.5);
+            gameState.enemySpawnRate = Math.max(500, gameState.enemySpawnRate - 200);
+            levelCompleteScreen.classList.add('hidden');
+            gameState.gameRunning = true;
+            gameLoop();
+        }
+
+        // Oyunu yeniden başlat
+        function restartGame() {
+            gameOverScreen.classList.add('hidden');
+            
+            // Tüm oyun elemanlarını temizle
+            gameState.bullets.forEach(b => gameContainer.removeChild(b.element));
+            gameState.enemies.forEach(e => gameContainer.removeChild(e.element));
+            gameState.enemyBullets.forEach(b => gameContainer.removeChild(b.element));
+            gameState.powerups.forEach(p => gameContainer.removeChild(p.element));
+            gameState.explosions.forEach(e => gameContainer.removeChild(e.element));
+            
+            startGame();
+        }
+
+        // Menüye dön
+        function quitToMenu() {
+            gameOverScreen.classList.add('hidden');
+            levelCompleteScreen.classList.add('hidden');
+            gameContainer.classList.add('hidden');
+            mainMenu.classList.remove('hidden');
+        }
+
+        // Oyunu duraklat
+        function pauseGame() {
+            gameState.gameRunning = !gameState.gameRunning;
+            
+            if (gameState.gameRunning) {
+                gameLoop();
+            }
+        }
+
+        // Yüksek skorları güncelle
+        function updateHighScores(score) {
+            gameState.highScores.push(score);
+            gameState.highScores.sort((a, b) => b - a);
+            gameState.highScores = gameState.highScores.slice(0, 10);
+            localStorage.setItem('skyFuryHighScores', JSON.stringify(gameState.highScores));
+        }
+
+        // Nasıl oynanır göster
+        function showInstructions() {
+            instructions.classList.remove('hidden');
+        }
+
+        // Nasıl oynanır gizle
+        function hideInstructions() {
+            instructions.classList.add('hidden');
+        }
+
+        // Yüksek skorları göster
+        function showHighScores() {
+            highScoresScreen.classList.remove('hidden');
+            scoresList.innerHTML = '';
+            
+            if (gameState.highScores.length === 0) {
+                scoresList.innerHTML = '<p class="text-gray-400">Henüz skor yok</p>';
+            } else {
+                gameState.highScores.forEach((score, index) => {
+                    const scoreItem = document.createElement('div');
+                    scoreItem.className = 'flex justify-between items-center p-2 bg-gray-700 rounded';
+                    scoreItem.innerHTML = `
+                        <span class="font-bold">${index + 1}.</span>
+                        <span class="text-yellow-400 font-bold">${score}</span>
+                    `;
+                    scoresList.appendChild(scoreItem);
+                });
+            }
+        }
+
+        // Yüksek skorları gizle
+        function hideHighScores() {
+            highScoresScreen.classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
