@@ -29,6 +29,10 @@
         
         .jet {
             transition: transform 0.1s ease;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="%23cbd5e0" d="M511.6 255.6c0-3.1-.4-6.2-1.3-9.1l-30.8-106.9c-8.8-30.5-33.1-54.8-63.6-63.6l-106.9-30.8c-9.5-2.7-19.3-2.7-28.8 0l-106.9 30.8c-30.5 8.8-54.8 33.1-63.6 63.6L1.3 246.5c-.9 2.9-1.3 6-1.3 9.1 0 3.1.4 6.2 1.3 9.1l30.8 106.9c8.8 30.5 33.1 54.8 63.6 63.6l106.9 30.8c9.5 2.7 19.3 2.7 28.8 0l106.9-30.8c30.5-8.8 54.8-33.1 63.6-63.6l30.8-106.9c.9-2.9 1.3-6 1.3-9.1z"/><path fill="%23e2e8f0" d="M256 0c-3.1 0-6.2.4-9.1 1.3l-106.9 30.8c-30.5 8.8-54.8 33.1-63.6 63.6L45.6 202.6c-2.7 9.5-2.7 19.3 0 28.8l30.8 106.9c8.8 30.5 33.1 54.8 63.6 63.6l106.9 30.8c9.5 2.7 19.3 2.7 28.8 0l106.9-30.8c30.5-8.8 54.8-33.1 63.6-63.6l30.8-106.9c2.7-9.5 2.7-19.3 0-28.8l-30.8-106.9c-8.8-30.5-33.1-54.8-63.6-63.6L265.1 1.3C262.2.4 259.1 0 256 0z"/><path fill="%233b82f6" d="M256 512c3.1 0 6.2-.4 9.1-1.3l106.9-30.8c30.5-8.8 54.8-33.1 63.6-63.6l30.8-106.9c.9-2.9 1.3-6 1.3-9.1s-.4-6.2-1.3-9.1l-30.8-106.9c-8.8-30.5-33.1-54.8-63.6-63.6l-106.9-30.8c-9.5-2.7-19.3-2.7-28.8 0l-106.9 30.8c-30.5 8.8-54.8 33.1-63.6 63.6L1.3 246.5c-.9 2.9-1.3 6-1.3 9.1s.4 6.2 1.3 9.1l30.8 106.9c8.8 30.5 33.1 54.8 63.6 63.6l106.9 30.8c9.5 2.7 19.3 2.7 28.8 0z"/></svg>');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
         }
         
         .bullet {
@@ -60,6 +64,40 @@
             0%, 100% { background-color: transparent; }
             50% { background-color: rgba(255, 0, 0, 0.3); }
         }
+        
+        /* Uçak kanatları için */
+        .jet::before, .jet::after {
+            content: '';
+            position: absolute;
+            background-color: #3b82f6;
+            width: 30px;
+            height: 8px;
+            border-radius: 4px;
+        }
+        
+        .jet::before {
+            left: -25px;
+            top: 50%;
+            transform: translateY(-50%) rotate(-20deg);
+        }
+        
+        .jet::after {
+            right: -25px;
+            top: 50%;
+            transform: translateY(-50%) rotate(20deg);
+        }
+        
+        /* Uçak kuyruğu */
+        .jet-tail {
+            position: absolute;
+            width: 15px;
+            height: 10px;
+            background-color: #3b82f6;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 0 0 5px 5px;
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-white overflow-hidden">
@@ -88,7 +126,7 @@
                 <div class="space-y-4 text-left">
                     <div class="flex items-start">
                         <div class="bg-blue-600 rounded-full w-8 h-8 flex items-center justify-center mr-4 mt-1 flex-shrink-0">1</div>
-                        <p><span class="font-bold">Uçağı hareket ettir:</span> WASD veya yön tuşlarını kullanarak uçağını kontrol et</p>
+                        <p><span class="font-bold">Uçağı hareket ettir:</span> Yön tuşlarını (←↑→↓) kullanarak uçağını kontrol et</p>
                     </div>
                     <div class="flex items-start">
                         <div class="bg-blue-600 rounded-full w-8 h-8 flex items-center justify-center mr-4 mt-1 flex-shrink-0">2</div>
@@ -133,10 +171,8 @@
         <!-- Oyun Alanı -->
         <div id="game-container" class="game-container relative hidden w-full max-w-4xl h-96 bg-blue-900 overflow-hidden rounded-lg border-2 border-blue-700 shadow-lg">
             <!-- Oyun elemanları buraya eklenecek -->
-            <div id="jet" class="jet absolute w-12 h-12 bg-red-500 rounded-t-full" style="left: 50px; top: 150px;">
-                <div class="absolute w-16 h-4 bg-red-600 rounded-full -bottom-1 left-1/2 transform -translate-x-1/2"></div>
-                <div class="absolute w-4 h-8 bg-red-700 rounded-full -left-1 top-1/2 transform -translate-y-1/2"></div>
-                <div class="absolute w-4 h-8 bg-red-700 rounded-full -right-1 top-1/2 transform -translate-y-1/2"></div>
+            <div id="jet" class="jet absolute w-16 h-16" style="left: 50px; top: 150px;">
+                <div class="jet-tail"></div>
             </div>
             
             <!-- Oyun bilgileri -->
@@ -258,24 +294,29 @@
         const jetWidth = jet.offsetWidth;
         const jetHeight = jet.offsetHeight;
 
-        // Kontroller
+        // Kontroller - Sadece ok tuşları
         document.addEventListener('keydown', (e) => {
-            gameState.keys[e.key] = true;
-            
-            // Boşluk tuşu ile ateş et
-            if (e.key === ' ' && gameState.gameRunning) {
-                e.preventDefault();
-                shoot();
-            }
-            
-            // ESC ile menüye dön
-            if (e.key === 'Escape' && gameState.gameRunning) {
-                pauseGame();
+            // Sadece ok tuşlarını ve boşluk tuşunu işle
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
+                gameState.keys[e.key] = true;
+                
+                // Boşluk tuşu ile ateş et
+                if (e.key === ' ' && gameState.gameRunning) {
+                    e.preventDefault();
+                    shoot();
+                }
+                
+                // ESC ile menüye dön
+                if (e.key === 'Escape' && gameState.gameRunning) {
+                    pauseGame();
+                }
             }
         });
 
         document.addEventListener('keyup', (e) => {
-            gameState.keys[e.key] = false;
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
+                gameState.keys[e.key] = false;
+            }
         });
 
         // Buton eventleri
@@ -381,22 +422,22 @@
             }
         }
 
-        // Uçağı hareket ettir
+        // Uçağı hareket ettir (sadece ok tuşları)
         function moveJet() {
             const speed = 5;
             let newLeft = parseInt(jet.style.left);
             let newTop = parseInt(jet.style.top);
             
-            if (gameState.keys['ArrowUp'] || gameState.keys['w']) {
+            if (gameState.keys['ArrowUp']) {
                 newTop = Math.max(0, newTop - speed);
             }
-            if (gameState.keys['ArrowDown'] || gameState.keys['s']) {
+            if (gameState.keys['ArrowDown']) {
                 newTop = Math.min(gameHeight - jetHeight, newTop + speed);
             }
-            if (gameState.keys['ArrowLeft'] || gameState.keys['a']) {
+            if (gameState.keys['ArrowLeft']) {
                 newLeft = Math.max(0, newLeft - speed);
             }
-            if (gameState.keys['ArrowRight'] || gameState.keys['d']) {
+            if (gameState.keys['ArrowRight']) {
                 newLeft = Math.min(gameWidth - jetWidth, newLeft + speed);
             }
             
@@ -534,7 +575,7 @@
                 powerup.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>';
             } else if (type === 'health') {
                 powerup.classList.add('bg-green-500');
-                powerup.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>';
+                powerup.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24 stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>';
             }
             
             powerup.style.left = `${x}px`;
